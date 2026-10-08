@@ -1,0 +1,20 @@
+{
+  "name": "project-beta",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build_client.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node tools/run_ts.mjs tests/sim.test.ts",
+    "serveur": "node serveur.cjs",
+    "test:net": "node tools/run_ts.mjs tests/net.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.2",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0",
+    "ws": "^8.22.0"
+  }
+}

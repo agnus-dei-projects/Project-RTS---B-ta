@@ -1,0 +1,12 @@
+# Déploiement « Blueprint » sur Render (offre gratuite). Le jeu et le serveur sont déjà compilés (Project-Beta.html + serveur.cjs) :
+# aucune installation de dépendances n'est nécessaire côté Render.
+services:
+  - type: web
+    name: project-beta
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: echo "jeu et serveur deja compiles"
+    startCommand: node serveur.cjs
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit

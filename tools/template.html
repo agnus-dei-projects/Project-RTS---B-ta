@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Bêta</title>
+<style>
+:root{--bg:#0a0e13;--panel:#131a22;--panel2:#1a232e;--line:#2c3a4b;--tx:#e8eef4;--mu:#8696a8;--ac:#ffd54a;--ok:#5fd38d;--ko:#ff6b6b;--blue:#4ea1ff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:13px/1.4 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%}
+#top{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--panel);border-bottom:2px solid var(--line);flex-wrap:wrap}
+#stats{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+.res{display:flex;align-items:baseline;gap:5px;background:var(--panel2);border:2px solid var(--line);padding:1px 7px;min-height:26px}
+.res .ico{font-size:14px}.res b{font-size:14px}.res small{color:var(--mu)}
+.res.gold b{color:var(--ac)}.res.pv b{color:var(--ok)}
+.gauge{position:relative;min-width:168px;padding:0;overflow:hidden}
+.gauge i{position:absolute;left:0;top:0;bottom:0;background:#2d5d8e;z-index:0}
+.gauge span{position:relative;z-index:1;padding:2px 7px;display:block;white-space:nowrap}
+#speeds{display:flex;gap:3px}
+button{font:inherit;color:var(--tx);background:var(--panel2);border:2px solid var(--line);padding:3px 8px;cursor:pointer;text-align:left}
+button:hover{border-color:#4a6180;background:#223041}
+button.on{background:#2a4262;border-color:var(--ac)}
+button.dis{opacity:.45}
+button small{color:var(--mu);display:block}
+main{display:flex;flex:1;min-height:0}
+#mapwrap{position:relative;flex:1;min-width:0;background:#08111d}
+canvas#map{display:block;touch-action:none;image-rendering:pixelated}
+#tip{position:absolute;display:none;pointer-events:none;background:rgba(10,14,19,.96);border:2px solid var(--line);padding:5px 8px;z-index:5;max-width:260px}
+.dot{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:middle;border:1px solid #000}
+#toast{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:#233246;border:2px solid var(--line);padding:5px 12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:6;max-width:80%;text-align:center}
+#toast.show{opacity:1}#toast.err{background:#4a2327;border-color:#8a3f3f}
+#layers{position:absolute;left:8px;top:8px;display:flex;gap:3px;z-index:3}
+#tools{position:absolute;left:8px;bottom:8px;display:flex;flex-direction:column;gap:4px;z-index:3}
+#tools button{min-width:150px}
+#orders{position:absolute;left:8px;bottom:136px;display:flex;flex-direction:column;gap:3px;z-index:3;max-width:260px}
+.ord{background:rgba(10,14,19,.9);border:2px solid var(--line);padding:2px 6px;display:flex;gap:6px;align-items:center;justify-content:space-between}
+.ord .bar{flex:1}
+.ord button{padding:0 6px}
+#atkbar{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);background:rgba(10,14,19,.94);border:2px solid var(--line);padding:6px 10px;z-index:3;display:flex;flex-direction:column;gap:4px;min-width:340px}
+#atkbar .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+#atkbar input[type=range]{flex:1;accent-color:var(--ac)}
+#buildhint{position:absolute;left:50%;top:44px;transform:translateX(-50%);background:#2a4262;border:2px solid var(--ac);padding:3px 10px;z-index:4;display:none}
+#side{width:352px;max-width:44vw;background:var(--panel);border-left:2px solid var(--line);overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:6px}
+#side section{background:var(--panel2);border:2px solid var(--line);padding:6px}
+h4{margin:0 0 5px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ac)}h4 small{color:var(--mu);font-weight:400;text-transform:none}
+.muted{color:var(--mu)}.small{font-size:12px}
+.prow{display:grid;grid-template-columns:12px 84px 1fr 30px 46px 50px;align-items:center;gap:4px;padding:1px 2px;cursor:pointer}
+.prow:hover{background:rgba(255,255,255,.05)}.prow.me{background:rgba(255,213,74,.10)}.prow.dead{opacity:.35}
+.prow .dot{margin:0}.pname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{height:7px;background:#0b1118;border:1px solid #000}.bar i{display:block;height:100%}
+.prow small{color:var(--mu);text-align:right}
+.heads{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:6px}.lead{border:2px solid;padding:0 4px;font-size:12px}
+#tabs{display:flex;gap:3px;margin-bottom:6px}#tabs button{flex:1;text-align:center;padding:3px 2px}
+.brow{display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center;border:2px solid var(--line);padding:4px;margin-bottom:4px;cursor:pointer;background:#16202b}
+.brow:hover{border-color:#4a6180}.brow.sel{border-color:var(--ac);background:#27384d}.brow canvas{image-rendering:pixelated}
+.chips{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px}.chip{background:#0b1118;padding:0 5px;font-size:12px}.chip.no{color:var(--ko)}
+.lvl{border:2px solid var(--line);padding:4px 6px;margin-bottom:4px;background:#16202b}.lvl.got{border-color:#3b6b4b}
+.th{display:flex;justify-content:space-between;gap:6px}
+.mrow{display:grid;grid-template-columns:1fr 54px auto auto;gap:4px;align-items:center;margin-top:4px}
+.dip{border:2px solid var(--line);padding:5px 6px;margin-bottom:4px;background:#16202b}
+.dip .acts{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.ev{padding:1px 0;font-size:12px}#log{max-height:180px;overflow-y:auto}
+.overlay{position:absolute;inset:0;background:rgba(5,8,12,.88);display:flex;align-items:center;justify-content:center;z-index:20;padding:12px}
+.box{background:var(--panel);border:3px solid var(--line);padding:20px 24px;max-width:600px;max-height:96%;overflow:auto}
+.box h1,.box h2{margin:0 0 8px}.box ul{padding-left:18px;margin:8px 0}.box li{margin:4px 0}
+button.go{width:100%;text-align:center;background:#1f5a3a;border-color:#2f8a58;font-weight:700;padding:6px}
+.badge{background:var(--ko);color:#fff;padding:0 5px;margin-left:4px}
+
+input[type=text],select{font:inherit;color:var(--tx);background:#0b1118;border:2px solid var(--line);padding:3px 6px;min-width:0}
+input[type=text]:focus,select:focus{outline:none;border-color:var(--ac)}
+input[type=range]{accent-color:var(--ac)}
+input[type=checkbox]{accent-color:var(--ac);width:16px;height:16px}
+.menu{width:min(640px,96vw)}
+.scr{display:flex;flex-direction:column;gap:8px}.scr[hidden]{display:none}
+.frm{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;align-items:center}
+.frm .full{grid-column:1/-1}
+.inl{display:flex;gap:8px;align-items:center}.inl input[type=range]{flex:1}
+.botrows{display:flex;flex-direction:column;gap:3px;max-height:230px;overflow-y:auto;padding-right:4px}
+.botrow{display:grid;grid-template-columns:18px 1fr 108px 86px;gap:6px;align-items:center}
+.botrow .pers{color:var(--mu);font-size:12px;text-align:right}
+.row2{display:flex;gap:8px}.row2>*{flex:1}
+button.sec{text-align:center}
+.plist{display:flex;flex-direction:column;gap:2px;border:2px solid var(--line);padding:4px 8px;background:#0b1118}
+.err{color:var(--ko)}.okc{color:var(--ok)}
+#netbar{position:absolute;right:8px;top:8px;z-index:4;background:rgba(10,14,19,.9);border:2px solid var(--line);padding:2px 8px;display:none}
+#chatlog{position:absolute;right:8px;bottom:8px;z-index:4}
+@media (max-width:860px){main{flex-direction:column}#side{width:100%;max-width:none;height:44%;border-left:0;border-top:2px solid var(--line)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="top"><div id="stats"></div><div id="speeds"><button data-s="0" title="Espace">⏸</button><button data-s="1">1×</button><button data-s="2">2×</button><button data-s="4">4×</button><button data-s="8">8×</button></div><button id="menubtn" title="Menu (Échap)">☰ Menu</button></header>
+  <main>
+    <div id="mapwrap"><canvas id="map"></canvas><div id="tip"></div><div id="toast"></div><div id="buildhint"></div>
+      <div id="layers"></div><div id="netbar"></div>
+      <div id="orders"></div>
+      <div id="tools">
+        <button data-mode="attack" class="on">⚔ Attaquer <small>A · glisser pour surligner</small></button>
+        <button data-mode="pan">✋ Déplacer <small>H · ou clic droit</small></button>
+      </div>
+      <div id="atkbar">
+        <div class="row"><span id="atkread"></span><span class="muted small">touches 1-9, 0 : 10-100 %</span></div>
+        <div class="row"><input type="range" id="pct" min="5" max="100" step="5" value="40"><span class="small">pinceau <button data-brush="-1" style="padding:0 6px">−</button> <b id="brushv">3</b> <button data-brush="1" style="padding:0 6px">+</button></span></div>
+      </div>
+    </div>
+    <aside id="side">
+      <section id="score"></section>
+      <section><div id="tabs"><button data-t="build" class="on">Bâtir</button><button data-t="dip">Diplomatie</button><button data-t="tech">Techno · Marché</button></div><div id="tabbuild"></div><div id="tabdip" style="display:none"></div><div id="tabtech" style="display:none"></div></section>
+      <section><h4>Journal</h4><div id="log"></div></section>
+    </aside>
+  </main>
+  <div class="overlay" id="menu"><div class="box menu">
+    <h1>Project Bêta</h1>
+    <p class="muted" id="menusub">Stratégie pixel en temps réel · jusqu’à 10 joueurs, humains et bots.</p>
+
+    <div class="scr" id="scr-main">
+      <button class="go" data-go="solo">Solo</button>
+      <button class="go" data-go="multi">Multijoueur</button>
+      <button class="sec" data-go="settings">Paramètres</button>
+      <button class="sec" data-go="howto">Comment jouer</button>
+    </div>
+
+    <div class="scr" id="scr-pause" hidden>
+      <button class="go" data-act="resume">Reprendre</button>
+      <button class="sec" data-go="settings">Paramètres</button>
+      <button class="sec" data-go="howto">Comment jouer</button>
+      <button class="sec" data-act="quit" id="quitbtn">Quitter la partie</button>
+    </div>
+
+    <div class="scr" id="scr-solo" hidden>
+      <h4>Partie solo</h4>
+      <div class="frm">
+        <label for="s-name">Votre pseudo</label><input type="text" id="s-name" maxlength="16" placeholder="Vous" autocomplete="off">
+        <label for="s-nbots">Nombre de bots</label><div class="inl"><input type="range" id="s-nbots" min="1" max="9" step="1"><b id="s-nbots-v"></b></div>
+        <label for="s-time">Durée maximale</label><select id="s-time"></select>
+        <label>Difficulté de tous</label><div class="row2"><button class="sec" data-all="0">Facile</button><button class="sec" data-all="1">Normal</button><button class="sec" data-all="2">Difficile</button></div>
+        <label for="s-seed">Graine (option)</label><input type="text" id="s-seed" placeholder="aléatoire" autocomplete="off">
+      </div>
+      <div class="muted small">Pseudo, difficulté et style de chaque bot (laisser vide = nom par défaut) :</div>
+      <div class="botrows" id="s-bots"></div>
+      <p class="muted small" style="margin:0">Premier à 15 PV gagne aussitôt ; à l’échéance du temps, le plus de PV l’emporte.</p>
+      <div class="row2"><button class="sec" data-go="main">Retour</button><button class="go" data-act="solostart">Lancer la partie</button></div>
+    </div>
+
+    <div class="scr" id="scr-multi" hidden>
+      <h4>Multijoueur</h4>
+      <div id="m-connect" class="scr">
+        <div class="frm">
+          <label for="m-name">Votre pseudo</label><input type="text" id="m-name" maxlength="16" placeholder="Pseudo" autocomplete="off">
+          <label for="m-addr" id="m-addr-l">Adresse du serveur</label><input type="text" id="m-addr" placeholder="mon-jeu.onrender.com" autocomplete="off">
+          <label for="m-code">Code d’accès</label><input type="text" id="m-code" placeholder="seulement si le serveur en demande un" autocomplete="off" maxlength="40">
+        </div>
+        <p class="muted small" id="m-hint" style="margin:0"></p>
+        <div id="m-err" class="err small"></div>
+        <div class="row2"><button class="sec" data-go="main">Retour</button><button class="go" data-act="connect" id="m-connectbtn">Se connecter</button></div>
+      </div>
+      <div id="m-lobby" class="scr" hidden>
+        <div class="muted small" id="m-who"></div>
+        <div class="plist" id="m-players"></div>
+        <div class="frm">
+          <label for="m-nbots">Nombre de bots</label><div class="inl"><input type="range" id="m-nbots" min="0" max="9" step="1"><b id="m-nbots-v"></b></div>
+          <label for="m-time">Durée maximale</label><select id="m-time"></select>
+        </div>
+        <div class="botrows" id="m-bots"></div>
+        <div class="muted small" id="m-note"></div>
+        <div class="row2"><button class="sec" data-act="leave">Quitter le salon</button><button class="go" data-act="mstart" id="m-startbtn">Lancer la partie</button></div>
+      </div>
+    </div>
+
+    <div class="scr" id="scr-settings" hidden>
+      <h4>Paramètres</h4>
+      <div class="frm">
+        <label for="o-sound">Effets sonores</label><div class="inl"><input type="checkbox" id="o-sound"><span class="muted small">activés</span></div>
+        <label for="o-vol">Volume</label><div class="inl"><input type="range" id="o-vol" min="0" max="100" step="5"><button class="sec" data-act="testsound">Tester</button></div>
+        <label for="o-quality">Qualité graphique</label><select id="o-quality"><option value="high">Détaillée (texture, netteté écran HD)</option><option value="low">Économe (PC modestes)</option></select>
+        <label for="o-fps">Images par seconde</label><select id="o-fps"><option value="60">60 (fluide)</option><option value="30">30 (économe)</option></select>
+        <label for="o-labels">Noms sur la carte</label><div class="inl"><input type="checkbox" id="o-labels"><span class="muted small">pseudos et soldats</span></div>
+        <label>Affichage</label><button class="sec" data-act="fullscreen">Plein écran</button>
+      </div>
+      <p class="muted small" style="margin:0">Les réglages sont enregistrés dans ce navigateur.</p>
+      <button class="sec" data-act="back">Retour</button>
+    </div>
+
+    <div class="scr" id="scr-howto" hidden>
+      <h4>Comment jouer</h4>
+      <ul>
+        <li><b>Attaquer</b> : fixez la part de vos soldats à engager (curseur en bas), puis <b>surlignez à la souris la zone</b> à conquérir. Vous ne verrez jamais d’avance si l’attaque réussira.</li>
+        <li><b>Bâtir</b> : choisissez un bâtiment dans l’onglet « Bâtir » puis cliquez sur votre territoire. Scieries, mines et autres produisent des ressources, l’<b>Université</b> fait monter la jauge de technologie, le <b>Port</b> permet de débarquer (Corse !).</li>
+        <li><b>Diplomatie</b> : proposez des alliances à vos voisins (6 min, renouvelables). Un allié ne vous attaque pas, rapporte de l’or et de la recherche, et renforce votre défense.</li>
+        <li><b>Points de victoire</b> : +1 par région contrôlée à plus de 50 % (la première fois) · +1 au premier à chaque niveau de technologie · +1 par ressource dont vous avez le plus de bâtiments · +1 par titre (territoire, armée, revenu). <b>Le premier à 15 PV gagne.</b></li>
+      </ul>
+      <p class="muted small">Molette : zoom · clic droit ou ✋ : déplacer · WASD / flèches : déplacer · Espace : pause (solo) · [ ] : taille du pinceau · 1-9, 0 : % de soldats · Échap : menu.</p>
+      <button class="sec" data-act="back">Retour</button>
+    </div>
+  </div></div>
+  <div class="overlay" id="end" style="display:none"><div class="box" id="endbox"></div></div>
+</div>
+<script>/*JS*/</script>
+</body>
+</html>
